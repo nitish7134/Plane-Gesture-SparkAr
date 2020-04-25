@@ -1,14 +1,10 @@
-const Animation = require('Animation');
 const Patches = require('Patches');
-var Reactive = require('Reactive')
 const Scene = require('Scene');
 const TouchGestures = require('TouchGestures');
 const Diagnostics = require('Diagnostics');
 
+
 const sceneRoot = Scene.root;
-
-
-
 
 
 Promise.all([
@@ -17,47 +13,68 @@ Promise.all([
     sceneRoot.findFirst('placer')
 ])
     .then(function (objects) {
-        const base = objects[0];
+        const plane = objects[0];
         const planeTracker = objects[1];
         const placer = objects[2];
 
+        const placerTransform = placer.transform;
+
+
+     /*    const planeAnimParam = {
+            durationMilliseconds: 400,
+            loopCount: 0,
+            mirror: false
+        };
+        const planeAnimDriver = Animation.timeDriver(planeAnimParam);
+        planeAnimDriver.start();
+
+        const planeAnimRotationSampler = Animation.samplers.easeInQuint(-90, 990);
+        const planeAnimScaleSampler = Animation.samplers.easeInQuint(0, 1);
+
+        const planeAnimRotation = Animation.animate(planeAnimParam, planeAnimRotationSampler);
+        const planeAnimScale = Animation.animate(planeAnimParam, planeAnimScaleSampler);
+        const planeTransform = plane.transform;
+        planeTransform.scaleX = planeAnimScale;
+        planeTransform.scaleY = planeAnimScale;
+        planeTransform.scaleZ = planeAnimScale;
+        planeTransform.rotationY = planeAnimRotation; */
+
+
+
         var isInititalised = false;
         var isBladeRotate = false;
-        planeTracker.transform.scaleX = 0;
-        planeTracker.transform.scaleY = 0;
-        planeTracker.transform.scaleZ = 0;
+
+        placerTransform.scaleX = 0;
+        placerTransform.scaleY = 0;
+        placerTransform.scaleZ = 0;
+
         TouchGestures.onTap().subscribe(function (gesture) {
             Diagnostics.log('tap gesture detected');
 
             if (isInititalised) {
                 isInititalised = false;
-                planeTracker.transform.scaleX = 0;
-                planeTracker.transform.scaleY = 0;
-                planeTracker.transform.scaleZ = 0;
+                placerTransform.scaleX = 0;
+                placerTransform.scaleY = 0;
+                placerTransform.scaleZ = 0;
             }
             else {
                 isInititalised = true;
-                planeTracker.transform.scaleX = 1;
-                planeTracker.transform.scaleY = 1;
-                planeTracker.transform.scaleZ = 1;
-                var planeTransform = planeTracker.transform;
+                placerTransform.scaleX = 1;
+                placerTransform.scaleY = 1;
+                placerTransform.scaleZ = 1;
                 //update plane transform according to tap position
-                planeTransform;
             }
-            Patches.inputs.setBoolean("spawnLoop", isInititalised)
+            Patches.inputs.setBoolean("spawnLoop", isInititalised);
             Diagnostics.log("isInititalised- " + isInititalised);
-
 
         });
         TouchGestures.onPan().subscribe(function (gesture) {
             if (isInititalised) {
                 Diagnostics.log('pan gesture detected');
                 planeTracker.trackPoint(gesture.location, gesture.state);
+
             }
         });
-
-        const placerTransform = placer.transform;
-
         TouchGestures.onPinch().subscribeWithSnapshot({
 
             'lastScaleX': placerTransform.scaleX,
@@ -84,17 +101,13 @@ Promise.all([
         });
 
         TouchGestures.onLongPress().subscribe(function (gesture) {
-            if (isInititalised) {
-                Patches.inputs.setBoolean("RotateBlades", true);
-                gesture.state.monitor().subscribe(function (state) {
+            Diagnostics.log('losng press gesture start');
+            Diagnostics.log(isBladeRotate);
+            isBladeRotate = !isBladeRotate;
 
-                    // Return when the gesture ends
-                    if (state.newValue !== 'BEGAN' && state.newValue !== 'CHANGED') {
-                        Patches.inputs.setBoolean("RotateBlades", false);
-                    }                
-                });
+            if (isInititalised) {
+                Patches.inputs.setBoolean("RotateBlades", isBladeRotate);
             }
         });
-
 
     });
