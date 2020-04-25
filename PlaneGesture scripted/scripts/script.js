@@ -1,9 +1,15 @@
 const Animation = require('Animation');
+const Patches = require('Patches');
+var Reactive = require('Reactive')
 const Scene = require('Scene');
 const TouchGestures = require('TouchGestures');
 const Diagnostics = require('Diagnostics');
 
 const sceneRoot = Scene.root;
+
+
+
+
 
 Promise.all([
     sceneRoot.findFirst('FlyPlane'),
@@ -15,59 +21,80 @@ Promise.all([
         const planeTracker = objects[1];
         const placer = objects[2];
 
+        var isInititalised = false;
+        var isBladeRotate = false;
+        planeTracker.transform.scaleX = 0;
+        planeTracker.transform.scaleY = 0;
+        planeTracker.transform.scaleZ = 0;
         TouchGestures.onTap().subscribe(function (gesture) {
-
             Diagnostics.log('tap gesture detected');
-            var planeTransform = planeTracker.transform;
-            //var gestureTransform = Scene.unprojectWithDepth(gesture.location,0.5);
-            //var gestureTransform = gesture.location;
-            // planeTransform = gestureTransform;
-            const baseDriverParameters = {
-                durationMilliseconds: 400,
-                loopCount: Infinity,
-                mirror: true
-            };
-            const baseDriver = Animation.timeDriver(baseDriverParameters);
-            baseDriver.start();
-        
-            const baseSampler = Animation.samplers.easeInQuint(0.9,1);
-         
-            const baseAnimation = Animation.animate(baseDriver,baseSampler);
-        
-            const baseTransform = base.transform;
-        
-            baseTransform.scaleX = baseAnimation;
-            baseTransform.scaleY = baseAnimation;
-            baseTransform.scaleZ = baseAnimation;
 
-            TouchGestures.onPan().subscribe(function (gesture) {
+            if (isInititalised) {
+                isInititalised = false;
+                planeTracker.transform.scaleX = 0;
+                planeTracker.transform.scaleY = 0;
+                planeTracker.transform.scaleZ = 0;
+            }
+            else {
+                isInititalised = true;
+                planeTracker.transform.scaleX = 1;
+                planeTracker.transform.scaleY = 1;
+                planeTracker.transform.scaleZ = 1;
+                var planeTransform = planeTracker.transform;
+                //update plane transform according to tap position
+                planeTransform;
+            }
+            Patches.inputs.setBoolean("spawnLoop", isInititalised)
+            Diagnostics.log("isInititalised- " + isInititalised);
+
+
+        });
+        TouchGestures.onPan().subscribe(function (gesture) {
+            if (isInititalised) {
                 Diagnostics.log('pan gesture detected');
                 planeTracker.trackPoint(gesture.location, gesture.state);
-            });
-    
-            const placerTransform = placer.transform;
-    
-            TouchGestures.onPinch().subscribeWithSnapshot({
-    
-                'lastScaleX': placerTransform.scaleX,
-                'lastScaleY': placerTransform.scaleY,
-                'lastScaleZ': placerTransform.scaleZ
-            }, function (gesture, snapshot) {
+            }
+        });
+
+        const placerTransform = placer.transform;
+
+        TouchGestures.onPinch().subscribeWithSnapshot({
+
+            'lastScaleX': placerTransform.scaleX,
+            'lastScaleY': placerTransform.scaleY,
+            'lastScaleZ': placerTransform.scaleZ
+        }, function (gesture, snapshot) {
+            if (isInititalised) {
                 Diagnostics.log('pinch gesture detected');
                 placerTransform.scaleX = gesture.scale.mul(snapshot.lastScaleX);
                 placerTransform.scaleY = gesture.scale.mul(snapshot.lastScaleY);
                 placerTransform.scaleZ = gesture.scale.mul(snapshot.lastScaleZ);
-            });
-    
-            TouchGestures.onRotate().subscribeWithSnapshot({
-                'lastRotationY': placerTransform.rotationY,
-            }, function (gesture, snapshot) {
+            }
+        });
+
+        TouchGestures.onRotate().subscribeWithSnapshot({
+            'lastRotationY': placerTransform.rotationY,
+        }, function (gesture, snapshot) {
+            if (isInititalised) {
                 Diagnostics.log('rotate gesture detected');
-    
+
                 const correctRotation = gesture.rotation.mul(-1);
                 placerTransform.rotationY = correctRotation.add(snapshot.lastRotationY);
-            });
+            }
         });
-       
+
+        TouchGestures.onLongPress().subscribe(function (gesture) {
+            if (isInititalised) {
+                Patches.inputs.setBoolean("RotateBlades", true);
+                gesture.state.monitor().subscribe(function (state) {
+
+                    // Return when the gesture ends
+                    if (state.newValue !== 'BEGAN' && state.newValue !== 'CHANGED') {
+                        Patches.inputs.setBoolean("RotateBlades", false);
+                    }                
+                });
+            }
+        });
+
 
     });
