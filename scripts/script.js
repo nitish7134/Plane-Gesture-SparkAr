@@ -49,7 +49,7 @@ Promise.all([
         instructext.text = "Tap To Place";
         TouchGestures.onTap().subscribe(function(gesture) {
             Diagnostics.log('tap gesture detected');
-            Diagnostics.log(isBackCam.pinLastValue() + "isFace: " + isFace.pinLastValue());
+            Diagnostics.log(isBackCam.lastValue + "isFace: " + isFace.lastValue);
             if (isBackCam.pinLastValue()) {
 
                 if (isInititalised) {
@@ -75,7 +75,7 @@ Promise.all([
         TouchGestures.onPan().subscribe(function(gesture) {
 
 
-            if (isBackCam.pinLastValue() && isInititalised && isFace.pinLastValue()) {
+            if (isBackCam.lastValue && isInititalised && isFace.lastValue) {
                 Diagnostics.log('pan gesture detected');
                 planeTracker.trackPoint(gesture.location, gesture.state);
             }
@@ -87,7 +87,7 @@ Promise.all([
             'lastScaleZ': placerTransform.scaleZ
         }, function(gesture, snapshot) {
 
-            if (isBackCam.pinLastValue() && isInititalised && isFace.pinLastValue()) {
+            if (isBackCam.lastValue && isInititalised && isFace.lastValue) {
                 Diagnostics.log('pinch gesture detected');
                 placerTransform.scaleX = gesture.scale.mul(snapshot.lastScaleX);
                 placerTransform.scaleY = gesture.scale.mul(snapshot.lastScaleY);
@@ -98,7 +98,7 @@ Promise.all([
         TouchGestures.onRotate().subscribeWithSnapshot({
             'lastRotationY': placerTransform.rotationY,
         }, function(gesture, snapshot) {
-            if (isBackCam.pinLastValue() && isInititalised && isFace.pinLastValue()) {
+            if (isBackCam.lastValue && isInititalised && isFace.lastValue) {
 
                 const correctRotation = gesture.rotation.mul(-1);
                 placerTransform.rotationY = correctRotation.add(snapshot.lastRotationY);
@@ -106,9 +106,9 @@ Promise.all([
         });
 
         TouchGestures.onLongPress().subscribe(function(gesture) {
-            Diagnostics.log('lonasfa ' + isBladeRotate + "dfdf:" + isBackCam + ":::" + isInititalised);
+            Diagnostics.log('lonasfa ' + isBladeRotate + "dfdf:" + isBackCam.lastValue + ":::" + isInititalised);
 
-            if (isBackCam.pinLastValue() && isInititalised && isFace.pinLastValue()) {
+            if (isBackCam.lastValue && isInititalised && isFace.lastValue) {
                 isBladeRotate = !isBladeRotate;
                 Diagnostics.log('long press gesture start: ' + isBladeRotate);
                 Patches.inputs.setBoolean("RotateBlades", isBladeRotate);
